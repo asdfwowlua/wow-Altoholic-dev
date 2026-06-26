@@ -354,23 +354,27 @@ function ns:Level_OnEnter(frame)
 		AltoTooltip:AddLine(format("%s: %s", GUILD, GREEN..guildName),1,1,1)
 	end
 	
-	AltoTooltip:AddLine(EXPERIENCE_COLON .. " " 
-				.. GREEN .. DS:GetXP(character) .. WHITE .. "/" 
-				.. GREEN .. DS:GetXPMax(character) .. WHITE .. " (" 
-				.. GREEN .. DS:GetXPRate(character) .. "%"
-				.. WHITE .. ")",1,1,1);	
-	
-	local restXP = DS:GetRestXP(character)
-	if restXP and restXP > 0 then
-		AltoTooltip:AddLine(format("%s: %s", L["Rest XP"], GREEN..restXP),1,1,1)
-	end
-	
-	local suggestion = addon:GetSuggestion("Leveling", DS:GetCharacterLevel(character))
-	if suggestion then
-		AltoTooltip:AddLine(" ",1,1,1);
-		AltoTooltip:AddLine(L["Suggested leveling zone: "],1,1,1);
-		AltoTooltip:AddLine(TEAL .. suggestion,1,1,1);
-	end
+  if DS:GetXPMax(character) > 0 then -- fixes max level faulty display: "1234 / 0 (1.#INF%)" and turns it into "---" instead at max level
+    AltoTooltip:AddLine(EXPERIENCE_COLON .. " " 
+          .. GREEN .. DS:GetXP(character) .. WHITE .. "/" 
+          .. GREEN .. DS:GetXPMax(character) .. WHITE .. " (" 
+          .. GREEN .. DS:GetXPRate(character) .. "%"
+          .. WHITE .. ")",1,1,1);	
+    
+    local restXP = DS:GetRestXP(character)
+    if restXP and restXP > 0 then
+      AltoTooltip:AddLine(format("%s: %s", L["Rest XP"], GREEN..restXP),1,1,1)
+    end
+    
+    local suggestion = addon:GetSuggestion("Leveling", DS:GetCharacterLevel(character))
+    if suggestion then
+      AltoTooltip:AddLine(" ",1,1,1);
+      AltoTooltip:AddLine(L["Suggested leveling zone: "],1,1,1);
+      AltoTooltip:AddLine(TEAL .. suggestion,1,1,1);
+    end
+    else
+    AltoTooltip:AddLine(EXPERIENCE_COLON .. " " .. GREEN .. "---",1,1,1);
+  end
 
 	-- parse saved instances
 	local c = addon:GetCharacterTableByLine(line)
