@@ -1,4 +1,4 @@
-﻿--[[	*** DataStore_Characters ***
+--[[	*** DataStore_Characters ***
 Written by : Thaoky, EU-Marécages de Zangar
 July 18th, 2009
 --]]
@@ -55,19 +55,26 @@ local function ScanPlayerLocation()
 end
 
 -- *** Event Handlers ***
-local function OnPlayerGuildUpdate()
-	-- at login this event is called between OnEnable and PLAYER_ALIVE, where GetGuildInfo returns a wrong value
-	-- however, the value returned here is correct
-	if IsInGuild() then
-		-- find a way to improve this, it's minor, but it's called too often at login
-		local name, rank, index = GetGuildInfo("player")
-		if name and rank and index then
-			local character = addon.ThisCharacter
-			character.guildName = name
-			character.guildRankName = rank
-			character.guildRankIndex = index
-		end
-	end
+local function OnPlayerGuildUpdate() -- this now only updates if the character summary is shown; no longer event-based
+  local character = addon.ThisCharacter
+  local name, rank, index = GetGuildInfo("player")
+  if name and rank and index then
+    character.guildName = name
+    character.guildRankName = rank
+    character.guildRankIndex = index
+    else -- now info can also be removed to correctly list the guildless state
+    character.guildName = nil
+    character.guildRankName = nil
+    character.guildRankIndex = nil
+  end
+end
+
+-- runs once per login / UI reload, which is necessary to fix wrong data on all characters that are still listed to be in a guild
+-- in which they aren't anymore; previously guild data would never update again once no longer in a guild and instead still display old guild membership
+local function GuildDataFix()
+  OnPlayerGuildUpdate()
+  addon:UnregisterEvent("PLAYER_ENTERING_WORLD")
+  addon:RegisterEvent("PLAYER_GUILD_UPDATE", OnPlayerGuildUpdate)
 end
 
 local function OnPlayerUpdateResting()
@@ -179,8 +186,12 @@ local function _GetXP(character)
 	return character.XP or 0
 end
 
-local function _GetXPRate(character)
-	return floor((character.XP / character.XPMax) * 100)
+local function _GetXPRate(character) -- fixes faulty display of "1.#INF%" at max level and replaces it with "0%"
+  if character.XPMax > 0 then
+    return floor((character.XP / character.XPMax) * 100)
+    else
+    return 0
+  end
 end
 
 local function _GetXPMax(character)
@@ -263,6 +274,7 @@ local PublicMethods = {
 	GetGuildInfo = _GetGuildInfo,
 	GetPlayTime = _GetPlayTime,
 	GetLocation = _GetLocation,
+  OnPlayerGuildUpdate = _OnPlayerGuildUpdate
 }
 
 function addon:OnInitialize()
@@ -298,7 +310,8 @@ function addon:OnEnable()
 	addon:RegisterEvent("PLAYER_MONEY", OnPlayerMoney)
 	addon:RegisterEvent("PLAYER_XP_UPDATE", OnPlayerXPUpdate)
 	addon:RegisterEvent("PLAYER_UPDATE_RESTING", OnPlayerUpdateResting)
-	addon:RegisterEvent("PLAYER_GUILD_UPDATE", OnPlayerGuildUpdate)				-- for gkick, gquit, etc..
+	--addon:RegisterEvent("PLAYER_GUILD_UPDATE", OnPlayerGuildUpdate)				-- for gkick, gquit, etc..; will be enabled after login
+  addon:RegisterEvent("PLAYER_ENTERING_WORLD", GuildDataFix)				-- because it previously never updated to guildless and this needs fixing for all characters that now have wrong entries
 	addon:RegisterEvent("ZONE_CHANGED", ScanPlayerLocation)
 	addon:RegisterEvent("ZONE_CHANGED_NEW_AREA", ScanPlayerLocation)
 	addon:RegisterEvent("ZONE_CHANGED_INDOORS", ScanPlayerLocation)
