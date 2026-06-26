@@ -82,7 +82,7 @@ local SortedAchievements = {
 	[CAT_PROFESSIONS_FIRSTAID] = "131,132,133,134,135",					-- journeyman, expert, artisan, master, grand master
 	[CAT_REPUTATIONS] = "522,523,524,521,520,519,518,1014,1015",		-- exalted reputations
 	[CAT_EVENTS_LUNARFESTIVAL] = "605,606,607,608,609",				-- coins of ancestry
-	[CAT_EVENTS_ARGENTTOURNAMENT] = "2756,2758,2777,2760,2779,2762,2780,2763,2781,2764,2778,2761,2782,2770,2817,2783,2765,2784,2766,2785,2767,2786,2768,2787,2769,2788,2771,2816",
+	--[CAT_EVENTS_ARGENTTOURNAMENT] = "2756,2758,2777,2760,2779,2762,2780,2763,2781,2764,2778,2761,2782,2770,2817,2783,2765,2784,2766,2785,2767,2786,2768,2787,2769,2788,2771,2816",
 }
 
 local UnsortedAchievements = {
@@ -118,16 +118,18 @@ local UnsortedAchievements = {
 	[CAT_EVENTS_LUNARFESTIVAL] = "626,910,911,912,914,915,937,1281,1396,1552",
 	[CAT_EVENTS_LOVEISINTHEAIR] = "1701,260,1695,1699,1279:1280,1704,1291,1694,1703,1697:1698,1700,1188,1702,1696,4624",
 	[CAT_EVENTS_NOBLEGARDEN] = "2576,2418,2417,2436,249,2416,2676,2421:2420,2422,2419:2497,248",
-	[CAT_EVENTS_MIDSUMMER] = "271,1037,1035,1028:1031,1029:1032,1030:1033,1025,1026,1027,1022,1023,1024,263,1145,1034:1036,272",
+  [CAT_EVENTS_MIDSUMMER] = "271,272,263,1145,1022:1025,1028:1031,1023:1026,1029:1032,1024:1027,1030:1033,1034:1036,1035:1037",
 	[CAT_EVENTS_BREWFEST] = "2796,1183,295,293,1936,1186,1260,303,1184:1203,1185",
 	[CAT_EVENTS_HALLOWSEND] = "284,255,291,1261,288,1040:1041,292,981,979,283,289,972,970:971,966:967,963:965,969:968",
 	[CAT_EVENTS_PILGRIMSBOUNTY] = "3579,3576:3577,3556:3557,3580:3581,3596:3597,3558,3582,3578,3559",
 	[CAT_EVENTS_WINTERVEIL] = "277,1690,4436:4437,1686:1685,1295,1282,1689,1687,273,1255:259,279,1688,252",
-	[CAT_EVENTS_ARGENTTOURNAMENT] = "3676,2773,2836,3736,3677,4596,2772",
+	[CAT_EVENTS_ARGENTTOURNAMENT] = "2756,2758,2772,2773,2836,3736,4596,2781:2783,2779:2784,2780:2787,2777:2786,2778:2785,2782:2788,3676:3677,2764:2765,2762:2766,2763:2769,2760:2768,2761:2767,2770:2771,2817:2816",
 	[CAT_FEATS] = "411,412,414,415,416,418,419,420,424,425,426,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,454,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471:453,472,473,662,663,664,665,683,684,725,729,871,879,880,881,882,883,884,885,886,887,888,980,1205,1292,1293,1400,1402,1404,1405,1406,1407,1408,1409,1410,1411,1412,1413,1414,1415,1416,1417,1418,1419,1420,1421,1422,1423,1424,1425,1426,1427,1436,1463,1636,1637,1705,1706,2018,2019,2079,2081,2116,2316,2336,2357,2358,2359,2398,2456,2496,3096,3117,3142,3259,3336,3356,3357,3436,3496,3536,3618,3636,3756,3757,3758,3896,4078,4079:4156,4400,4496,4576,4599,4600,4623,4625,4626,4627",
 }
 
 local AchievementsList = {}
+local tonumber = tonumber
+local type = type
 
 local function SortByName(a, b)
 	if type(a) == "string" then
@@ -162,7 +164,8 @@ local function BuildCategoryList(categoryID)
 			id = GetAchievementInfo(categoryID, i)
 			AddAchievementToCategory(categoryID, id)
 		end
-		table.sort(AchievementsList[categoryID], SortByName)
+		-- table.sort(AchievementsList[categoryID], SortByName)
+    -- sorting by name is a bad idea; the logical order makes far more sense
 		return
 	end
 	
@@ -175,11 +178,24 @@ local function BuildCategoryList(categoryID)
 	
 	-- .. then add the unsorted ones after they've been sorted alphabetically.
 	if UnsortedAchievements[categoryID] then
+    local pf = UnitFactionGroup("player")
+    if pf == "Alliance" then
+      pf = 1
+      else
+      pf = 2
+    end
 		local remaining = {}
 		for achievement in UnsortedAchievements[categoryID]:gmatch("([^,]+)") do
+      local var = {strsplit(":",achievement)}
+      if pf == 2 and var[2] then
+        achievement = var[2]
+        else
+        achievement = var[1]
+      end
 			table.insert(remaining, tonumber(achievement) or achievement)
 		end
-		table.sort(remaining, SortByName)	-- sort remaining achievements by name ..
+		--table.sort(remaining, SortByName)	-- sort remaining achievements by name ..
+    -- sorting by name is a bad idea; the logical order makes far more sense
 		
 		for _, achievement in pairs(remaining) do		
 			AddAchievementToCategory(categoryID, achievement)
